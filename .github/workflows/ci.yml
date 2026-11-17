@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint (Pint, ESLint, Prettier)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          composer install --no-interaction --no-progress --prefer-dist --no-scripts
+          npm ci
+
+      - name: Pint
+        run: vendor/bin/pint --test
+
+      - name: ESLint
+        run: npx eslint .
+
+      - name: Prettier
+        run: npm run format:check
+
+  tests:
+    name: Tests (Pest)
+    runs-on: ubuntu-latest
+
+    services:
+      pgsql:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_DB: jobpilot_testing
+          POSTGRES_USER: jobpilot
+          POSTGRES_PASSWORD: secret
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U jobpilot"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_pgsql, pgsql
+          tools: composer:v2
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          composer install --no-interaction --no-progress --prefer-dist
+          npm ci
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan ziggy:generate
+
+      - name: Build assets
+        run: npm run build
+
+      - name: Pest
+        run: vendor/bin/pest
