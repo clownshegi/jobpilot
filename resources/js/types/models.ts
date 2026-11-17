@@ -50,6 +50,14 @@ export interface Vacancy {
     application?: JobApplication;
 }
 
+export interface VacancyImport {
+    id: number;
+    url: string;
+    status: 'pending' | 'processing' | 'done' | 'failed';
+    vacancy_id: number | null;
+    message: string | null;
+}
+
 export interface BoardColumn {
     status: ApplicationStatus;
     label: string;

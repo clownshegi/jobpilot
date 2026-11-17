@@ -1,9 +1,11 @@
 <?php
 
 use App\Enums\ApplicationStatus;
+use App\Events\BoardChanged;
 use App\Models\JobApplication;
 use App\Models\User;
 use App\Models\Vacancy;
+use Illuminate\Support\Facades\Event;
 use Inertia\Testing\AssertableInertia as Assert;
 
 /**
@@ -123,6 +125,17 @@ test('application notes can be updated', function () {
         ->assertSessionHasNoErrors();
 
     expect($application->fresh()->notes)->toBe('Recruiter: Anna, call on Friday');
+});
+
+test('moving a card tells the owner\'s open boards to refresh', function () {
+    Event::fake([BoardChanged::class]);
+    $user = User::factory()->create();
+    [$application] = column($user, ApplicationStatus::Wishlist, 1);
+
+    $this->actingAs($user)->patch(route('job-applications.move', $application), ['status' => 'applied']);
+
+    Event::assertDispatched(BoardChanged::class, fn (BoardChanged $event) => $event->userId === $user->id
+        && $event->broadcastOn()->name === "private-App.Models.User.{$user->id}");
 });
 
 test('users cannot move or edit other users\' applications', function () {

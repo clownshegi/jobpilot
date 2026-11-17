@@ -5,6 +5,7 @@ import StatusBadge from '@/components/StatusBadge.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
+import ImportVacancyDialog from '@/components/vacancies/ImportVacancyDialog.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDate, formatSalary } from '@/lib/format';
 import type { BreadcrumbItem } from '@/types';
@@ -40,7 +41,8 @@ watchDebounced(
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="space-y-6 p-4">
             <PageHeader title="Vacancies" :description="`${vacancies.meta.total} in total`">
-                <Button as-child>
+                <ImportVacancyDialog />
+                <Button as-child size="sm">
                     <Link :href="route('vacancies.create')"><Plus /> New vacancy</Link>
                 </Button>
             </PageHeader>

@@ -45,6 +45,9 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'flash' => [
+                'vacancyImport' => fn () => $request->session()->get('vacancyImport'),
+            ],
         ]);
     }
 }

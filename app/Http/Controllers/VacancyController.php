@@ -6,6 +6,7 @@ use App\Actions\CreateVacancy;
 use App\Actions\UpdateVacancy;
 use App\Enums\ApplicationStatus;
 use App\Enums\WorkMode;
+use App\Events\BoardChanged;
 use App\Http\Requests\StoreVacancyRequest;
 use App\Http\Requests\VacancyRequest;
 use App\Http\Resources\JobApplicationResource;
@@ -91,6 +92,7 @@ class VacancyController extends Controller
         Gate::authorize('update', $vacancy);
 
         $updateVacancy->handle($vacancy, $request->validated());
+        BoardChanged::dispatch($vacancy->user_id);
 
         return to_route('vacancies.show', $vacancy);
     }
@@ -100,6 +102,7 @@ class VacancyController extends Controller
         Gate::authorize('delete', $vacancy);
 
         $vacancy->delete();
+        BoardChanged::dispatch($vacancy->user_id);
 
         return to_route('vacancies.index');
     }

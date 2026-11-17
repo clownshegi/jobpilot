@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\BoardChanged;
 use App\Http\Requests\CompanyRequest;
 use App\Http\Resources\CompanyResource;
 use App\Models\Company;
@@ -37,6 +38,7 @@ class CompanyController extends Controller
         Gate::authorize('update', $company);
 
         $company->update($request->validated());
+        BoardChanged::dispatch($company->user_id);
 
         return back();
     }
@@ -46,6 +48,7 @@ class CompanyController extends Controller
         Gate::authorize('delete', $company);
 
         $company->delete();
+        BoardChanged::dispatch($company->user_id);
 
         return to_route('companies.index');
     }

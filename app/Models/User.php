@@ -66,6 +66,14 @@ class User extends Authenticatable
     }
 
     /**
+     * @return HasMany<VacancyImport, $this>
+     */
+    public function vacancyImports(): HasMany
+    {
+        return $this->hasMany(VacancyImport::class);
+    }
+
+    /**
      * @return HasManyThrough<JobApplication, Vacancy, $this>
      */
     public function jobApplications(): HasManyThrough

@@ -3,6 +3,7 @@
 namespace App\Actions;
 
 use App\Enums\ApplicationStatus;
+use App\Events\BoardChanged;
 use App\Models\User;
 use App\Models\Vacancy;
 use Illuminate\Support\Facades\DB;
@@ -36,6 +37,8 @@ class CreateVacancy
             ]);
 
             $application->statusChanges()->create(['from_status' => null, 'to_status' => $status]);
+
+            BoardChanged::dispatch($user->id);
 
             return $vacancy;
         });

@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import BoardCard from '@/components/board/BoardCard.vue';
 import { Button } from '@/components/ui/button';
+import ImportVacancyDialog from '@/components/vacancies/ImportVacancyDialog.vue';
 import { useBoard } from '@/composables/useBoard';
+import { useUserEvent } from '@/composables/useUserEvent';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { statusClasses } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 import type { BoardColumn } from '@/types/models';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { Plus } from 'lucide-vue-next';
 import { toRef } from 'vue';
 import { VueDraggable } from 'vue-draggable-plus';
@@ -19,6 +21,9 @@ const props = defineProps<{
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Board', href: '/board' }];
 
 const { columns, onDragEnd } = useBoard(toRef(props, 'columns'));
+
+// Another tab (or an import finishing in the queue) changed the board: refetch the columns.
+useUserEvent('board.changed', () => router.reload({ only: ['columns'] }));
 </script>
 
 <template>
@@ -28,9 +33,12 @@ const { columns, onDragEnd } = useBoard(toRef(props, 'columns'));
         <div class="flex h-full flex-col gap-4 p-4">
             <div class="flex items-center justify-between gap-4">
                 <h1 class="text-xl font-semibold tracking-tight">Application board</h1>
-                <Button as-child size="sm">
-                    <Link :href="route('vacancies.create')"><Plus /> New vacancy</Link>
-                </Button>
+                <div class="flex gap-2">
+                    <ImportVacancyDialog />
+                    <Button as-child size="sm">
+                        <Link :href="route('vacancies.create')"><Plus /> New vacancy</Link>
+                    </Button>
+                </div>
             </div>
 
             <div class="flex flex-1 gap-4 overflow-x-auto pb-2">

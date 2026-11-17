@@ -3,6 +3,7 @@
 namespace App\Actions;
 
 use App\Enums\ApplicationStatus;
+use App\Events\BoardChanged;
 use App\Models\JobApplication;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -37,6 +38,8 @@ class MoveJobApplication
             }
 
             $this->renumber($siblingIds);
+
+            BoardChanged::dispatch($user->id);
 
             return $application->refresh();
         });
