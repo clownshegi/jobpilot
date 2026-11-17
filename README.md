@@ -10,10 +10,10 @@ that compares my CV with a vacancy and explains what matches and what is missing
 
 ## Features
 
-- [ ] Vacancies, companies, applications, statuses
-- [ ] Kanban board for the application pipeline
-- [ ] Import a vacancy by URL (queued job, Horizon + Redis)
-- [ ] Real-time updates (Reverb)
+- [x] Vacancies, companies, applications with status history
+- [x] Kanban board with drag and drop
+- [x] Import a vacancy by link: a queued job (Horizon + Redis) reads the page's schema.org `JobPosting` data, with SSRF protection
+- [x] Real-time updates over WebSockets (Reverb): import progress, boards in other tabs refresh themselves
 - [ ] AI matching: CV ↔ vacancy score with explanation (Python, FastAPI, pgvector)
 - [ ] Cover-letter draft (local model via Ollama or an API provider)
 
@@ -29,11 +29,22 @@ that compares my CV with a vacancy and explains what matches and what is missing
 
 ## Architecture
 
-_Diagram coming with the AI service._
+_Full diagram coming with the AI service._ Design decisions and their trade-offs are in [docs/decisions.md](docs/decisions.md).
+
+Importing a vacancy by link:
+
+```
+browser ──POST /vacancy-imports──▶ Laravel ──job──▶ Redis queue ──▶ Horizon worker
+   ▲                                                                   │ fetch page, parse JSON-LD,
+   │                                                                   │ create vacancy
+   └──────────── WebSocket (Reverb): import status, board changed ◀────┘
+```
 
 ## Getting started
 
 Requirements: PHP 8.4, Composer, Node 22+, Docker.
+Postgres, Redis, the Horizon queue worker and the Reverb WebSocket server all run in Docker,
+so the queue works on Windows too (Horizon needs the `pcntl` extension, which Windows PHP lacks).
 
 ```bash
 git clone https://github.com/clownshegi/jobpilot.git
@@ -42,9 +53,9 @@ cp .env.example .env
 composer install
 npm install
 php artisan key:generate
-docker compose up -d        # Postgres (pgvector) + Redis
-php artisan migrate
-composer run dev            # http://localhost:8000
+docker compose up -d        # Postgres (pgvector), Redis, Horizon, Reverb
+php artisan migrate --seed  # demo data: demo@jobpilot.test / password
+composer run dev            # app + Vite at http://localhost:8000, queue dashboard at /horizon
 ```
 
 Tests:
